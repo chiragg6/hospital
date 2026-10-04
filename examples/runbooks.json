@@ -1,0 +1,27 @@
+[
+  {
+    "alert_name": "KubePodCrashLooping",
+    "action": "delete-pod",
+    "cooldown_seconds": 300
+  },
+  {
+    "alert_name": "KubeDeploymentReplicasMismatch",
+    "action": "rollout-restart",
+    "target_kind": "Deployment"
+  },
+  {
+    "alert_name": "KubeNodeNotReady",
+    "action": "cordon",
+    "name_label": "node",
+    "cooldown_seconds": 900
+  },
+  {
+    "alert_name": "NodeFilesystemFillingUp",
+    "action": "script",
+    "surgeon_label": "node",
+    "command": ["/opt/runbooks/trim-cache"],
+    "parameters": {
+      "timeout_seconds": "60"
+    }
+  }
+]

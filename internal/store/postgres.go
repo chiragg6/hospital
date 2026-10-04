@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"hospital/internal/model"
@@ -25,6 +26,7 @@ type Postgres struct {
 func OpenPostgres(ctx context.Context, dsn string) (*Postgres, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
+		log.Println("error opening postgres", err)
 		return nil, err
 	}
 	db.SetMaxOpenConns(10)

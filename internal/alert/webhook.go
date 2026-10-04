@@ -7,8 +7,7 @@ import (
 	"time"
 )
 
-// Message is the Alertmanager webhook body.
-// https://prometheus.io/docs/alerting/latest/configuration/#webhook_config
+// Message is the Alertmanager webhook body
 type Message struct {
 	Version string  `json:"version"`
 	Status  string  `json:"status"`

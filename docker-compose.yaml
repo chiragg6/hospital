@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: hospital
+      POSTGRES_PASSWORD: hospital
+      POSTGRES_DB: hospital
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hospital"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  hospital:
+    build: .
+    environment:
+      DATABASE_URL: postgres://hospital:hospital@postgres:5432/hospital?sslmode=disable
+      RUNBOOKS_FILE: /etc/hospital/runbooks.json
+      DRY_RUN: "true"
+      HOSPITAL_ADDR: ":8080"
+    volumes:
+      - ./examples/runbooks.json:/etc/hospital/runbooks.json:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hospital
+  namespace: hospital-system
+  labels:
+    app: hospital
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hospital
+  template:
+    metadata:
+      labels:
+        app: hospital
+    spec:
+      serviceAccountName: hospital
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: hospital
+          image: hospital:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: HOSPITAL_ADDR
+              value: ":8080"
+            - name: RUNBOOKS_FILE
+              value: /etc/hospital/runbooks.json
+            - name: DRY_RUN
+              value: "false"
+            - name: HOSPITAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hospital
+                  key: HOSPITAL_TOKEN
+                  optional: true
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hospital
+                  key: DATABASE_URL
+                  optional: true
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hospital
+                  key: SLACK_WEBHOOK_URL
+                  optional: true
+            - name: ALLOWED_NAMESPACES
+              value: ""
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: runbooks
+              mountPath: /etc/hospital
+              readOnly: true
+      volumes:
+        - name: runbooks
+          configMap:
+            name: hospital-runbooks

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: surgeon
+  namespace: hospital-system
+  labels:
+    app: surgeon
+spec:
+  selector:
+    matchLabels:
+      app: surgeon
+  template:
+    metadata:
+      labels:
+        app: surgeon
+    spec:
+      serviceAccountName: surgeon
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: surgeon
+          image: hospital:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/usr/local/bin/surgeon"]
+          env:
+            - name: HOSPITAL_URL
+              value: http://hospital.hospital-system.svc:8080
+            - name: SURGEON_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: HOSPITAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hospital
+                  key: HOSPITAL_TOKEN
+                  optional: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: runbooks
+              mountPath: /opt/runbooks
+              readOnly: true
+      volumes:
+        - name: runbooks
+          configMap:
+            name: surgeon-scripts
+            optional: true
+            defaultMode: 0555
